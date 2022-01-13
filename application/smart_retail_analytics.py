@@ -270,12 +270,14 @@ def load_model_device(infer_network, model, device, in_size, out_size, num_reque
     """
     if 'MULTI' not in device and device not in accepted_devices:
         print("Unsupported device: " + device)
+        print("bye")
         sys.exit(1)
     elif 'MULTI' in device:
         target_devices = device.split(':')[1].split(',')
         for multi_device in target_devices:
             if multi_device not in accepted_devices:
                 print("Unsupported device: " + device)
+                print("bye")
                 sys.exit(1)
 
     global myriad_plugin
@@ -299,9 +301,10 @@ def load_models(video_caps, args):
     :return: None
     """
     global check_feed_type
-
+    print("Ya Allah")
     # Check if one of the feed type is "shopper". If yes, load the face, head pose and mood detection model
     if check_feed_type[0]:
+        print("feed type 0")
         infer_network_face = Network()
         infer_network_pose = Network()
         infer_network_mood = Network()
@@ -310,29 +313,35 @@ def load_models(video_caps, args):
         tag_mood = {"VPU_HDDL_GRAPH_TAG": "tagMood"}
         nchw_fd = load_model_device(infer_network_face, args.facemodel, args.facedevice, 1, 1, 2,
                                     args.cpu_extension, tag_face)
-        nchw_hp = load_model_device(infer_network_pose, args.posemodel, args.posedevice, 1, 3, 2,
-                                    args.cpu_extension, tag_pose)
+        print("face detection loaded")
+        # nchw_hp = load_model_device(infer_network_pose, args.posemodel, args.posedevice, 1, 3, 2,
+        #                             args.cpu_extension, tag_pose)
+        print("hp loaded")
         nchw_md = load_model_device(infer_network_mood, args.moodmodel, args.mooddevice, 1, 1, 2,
                                     args.cpu_extension, tag_mood)
+        print("feed type 0 finished")
 
     if check_feed_type[2]:
+        print("2")
         infer_network = Network()
         tag_obj = {"VPU_HDDL_GRAPH_TAG": "tagMobile"}
         nchw = load_model_device(infer_network, args.objmodel, args.objectdevice, 1, 1, 2, args.cpu_extension, tag_obj)
 
     if check_feed_type[1]:
+        print("1")
         infer_network_person = Network()
         tag_person = {"VPU_HDDL_GRAPH_TAG": "tagPerson"}
         nchw_pr = load_model_device(infer_network_person, args.personmodel, args.persondevice, 2, 1, 2,
                                     args.cpu_extension, tag_person)
-
     for video_cap in video_caps:
+        print("shopper")
         if video_cap.type == 'shopper':
             video_cap.infer_network = infer_network_face
             video_cap.infer_network_hp = infer_network_pose
             video_cap.infer_network_md = infer_network_mood
             video_cap.nchw.extend(nchw_fd)
-            video_cap.nchw_hp.extend(nchw_hp)
+            print("extension time")
+            # video_cap.nchw_hp.extend(nchw_hp)
             video_cap.nchw_md.extend(nchw_md)
 
         if video_cap.type == 'shelf':
@@ -342,6 +351,7 @@ def load_models(video_caps, args):
         if video_cap.type == 'traffic':
             video_cap.infer_network = infer_network_person
             video_cap.nchw.extend(nchw_pr)
+    print("hello")
 
 
 def object_detection(video_cap, res):
@@ -775,15 +785,17 @@ def retail_analytics():
     global centroids
     global tracked_person
     global db_client
-
-    log.basicConfig(format="[ %(levelname)s ] %(message)s", level=log.INFO, stream=sys.stdout)
+    log.basicConfig(format="[ %(levelname)s ] %(message)s", level=log.NOTSET, stream=sys.stdout)
     video_caps = parse_conf_file()
     assert len(video_caps) != 0, "No input source given in Configuration file"
     args = args_parser()
     check_args(args)
     load_models(video_caps, args)
+    print("wuw")
     labels = get_used_labels(video_caps, args)
+    print("wuw")
     create_database()
+    print("chal ja")
     min_fps = min([i.vc.get(cv2.CAP_PROP_FPS) for i in video_caps])
     no_more_data = [False] * len(video_caps)
     frames = [None] * len(video_caps)
@@ -806,6 +818,7 @@ def retail_analytics():
     cur_request_id = 0
     # Main loop for object detection in multiple video streams
     while True:
+        # print("okie, time to run")
         for idx, video_cap in enumerate(video_caps):
             vfps = int(round(video_cap.vc.get(cv2.CAP_PROP_FPS)))
             for i in range(0, int(round(vfps / min_fps))):
@@ -876,12 +889,13 @@ def retail_analytics():
 
                     else:
                         # Detect head pose and emotions of the faces detected
-                        detect_head_pose_and_emotions(video_cap, object_det)
+                        # detect_head_pose_and_emotions(video_cap, object_det)
 
                         # Send the data to InfluxDB
-                        if time.time() >= video_cap.utime + 1:
-                            update_info_shopper(video_cap)
-                            video_cap.utime = time.time()
+                        # if time.time() >= video_cap.utime + 1:
+                        #     update_info_shopper(video_cap)
+                        #     video_cap.utime = time.time()
+                        pass
                 if is_async_mode:
                     if video_cap.type == 'traffic':
                         cur_request_id_tr, next_request_id_tr = next_request_id_tr, cur_request_id_tr
@@ -939,11 +953,13 @@ def retail_analytics():
         img = img.tobytes()
 
         # Yield the output frame to the server
+        # print("capitalism")
         yield (b'--frame\r\n'
                b'Content-Type: image/jpeg\r\n\r\n' + img + b'\r\n\r\n')
 
         # If no more frames, exit the loop
         if False not in no_more_data:
+            print("end")
             break
 
 

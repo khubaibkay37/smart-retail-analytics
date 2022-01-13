@@ -59,7 +59,6 @@ class Network:
         :param plugin: Plugin for specified device
         :return:  Shape of input layer
         """
-
         model_xml = model
         model_bin = os.path.splitext(model_xml)[0] + ".bin"
         # Plugin initialization for specified device
@@ -80,9 +79,15 @@ class Network:
         log.info("Loading IR to the plugin...")
 
         if "CPU" in device:
+            print("cpu exists")
             supported_layers = self.plugin.query_network(self.net, "CPU")
-            not_supported_layers = \
-                [l for l in self.net.layers.keys() if l not in supported_layers]
+            #print(supported_layers)
+            print("1")
+            print("1.5")
+            # not_supported_layers = \
+            #    [l for l in self.net.layers.keys() if l not in supported_layers]
+            print('2')
+            not_supported_layers = []
             if len(not_supported_layers) != 0:
                 log.error("Following layers are not supported by "
                           "the plugin for specified device {}:\n {}".
@@ -92,7 +97,6 @@ class Network:
                           " in command line parameters using -l "
                           "or --cpu_extension command line argument")
                 sys.exit(1)
-
         if num_requests == 0:
             # Loads network read from IR to the plugin
             self.net_plugin = self.plugin.load_network(network=self.net, device_name=device, config=tag)
@@ -107,7 +111,7 @@ class Network:
             "Supports only {} input topologies".format(len(self.net.inputs))
         assert len(self.net.outputs) == output_size, \
             "Supports only {} output topologies".format(len(self.net.outputs))
-
+        print("Bye world")
         return self.plugin, self.get_input_shape()
 
     def get_input_shape(self):
